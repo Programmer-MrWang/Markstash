@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="using:Markstash.App.ViewModels"
+             x:Class="Markstash.App.Views.HomePageView"
+             x:DataType="viewModels:HomePageViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28" Spacing="24">
+      <StackPanel Spacing="6">
+        <TextBlock Classes="page-title" Text="{Binding Title}" />
+        <TextBlock Opacity="0.68"
+                   Text="Markstash 的跨平台应用骨架已经就绪。" />
+      </StackPanel>
+
+      <Grid ColumnDefinitions="*,*"
+            RowDefinitions="Auto,Auto"
+            ColumnSpacing="14"
+            RowSpacing="14">
+        <Border Grid.Row="0" Grid.Column="0" Classes="surface">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section-title" Text="收藏" />
+            <TextBlock FontSize="32" FontWeight="SemiBold" Text="0" />
+            <TextBlock Opacity="0.68" Text="等待接入第一个资源来源" />
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Row="0" Grid.Column="1" Classes="surface">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section-title" Text="索引" />
+            <TextBlock FontSize="32" FontWeight="SemiBold" Text="就绪" />
+            <TextBlock Opacity="0.68" Text="搜索能力可按功能切片继续扩展" />
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="surface">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section-title" Text="运行环境" />
+            <TextBlock Text="{Binding RuntimeDescription}" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

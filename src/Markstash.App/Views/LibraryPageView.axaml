@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="using:Markstash.App.ViewModels"
+             x:Class="Markstash.App.Views.LibraryPageView"
+             x:DataType="viewModels:LibraryPageViewModel">
+  <Grid RowDefinitions="Auto,*" Margin="28">
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel Spacing="6">
+        <TextBlock Classes="page-title" Text="{Binding Title}" />
+        <TextBlock Opacity="0.68" Text="{Binding ItemCount, StringFormat='共 {0} 项'}" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="新建收藏" VerticalAlignment="Center" />
+    </Grid>
+
+    <Border Grid.Row="1"
+            Classes="surface"
+            Margin="0,24,0,0"
+            MinHeight="260">
+      <StackPanel HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Spacing="10">
+        <TextBlock FontSize="20" FontWeight="SemiBold" Text="资源库还是空的" />
+        <TextBlock MaxWidth="360"
+                   Opacity="0.68"
+                   Text="后续的书签、文件、笔记或 AI 入口都可以从这里生长。"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

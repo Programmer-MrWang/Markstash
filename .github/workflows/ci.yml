@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: |
+          dotnet restore src/Markstash.Desktop/Markstash.Desktop.csproj --configfile NuGet.Config
+          dotnet restore tests/Markstash.Tests/Markstash.Tests.csproj --configfile NuGet.Config
+
+      - name: Build desktop host
+        run: dotnet build src/Markstash.Desktop/Markstash.Desktop.csproj --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test tests/Markstash.Tests/Markstash.Tests.csproj --configuration Release --no-restore
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: 17
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Restore
+        run: dotnet restore src/Markstash.Android/Markstash.Android.csproj --configfile NuGet.Config
+
+      - name: Build APK
+        run: dotnet build src/Markstash.Android/Markstash.Android.csproj --configuration Release --no-restore --property:AndroidSdkDirectory="$ANDROID_HOME"

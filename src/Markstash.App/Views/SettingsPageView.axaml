@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="using:Markstash.App.ViewModels"
+             x:Class="Markstash.App.Views.SettingsPageView"
+             x:DataType="viewModels:SettingsPageViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28" Spacing="24">
+      <TextBlock Classes="page-title" Text="{Binding Title}" />
+
+      <Border Classes="surface">
+        <Grid ColumnDefinitions="*,220" RowDefinitions="Auto,Auto" ColumnSpacing="18" RowSpacing="8">
+          <TextBlock Classes="section-title" Text="主题" />
+          <TextBlock Grid.Row="1"
+                     Opacity="0.68"
+                     Text="外观会自动保存，并在所有宿主中复用。"
+                     TextWrapping="Wrap" />
+          <ComboBox Grid.Column="1"
+                    Grid.RowSpan="2"
+                    ItemsSource="{Binding ThemeOptions}"
+                    SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                    VerticalAlignment="Center">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="viewModels:ThemeOptionViewModel">
+                <TextBlock Text="{Binding DisplayName}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </Grid>
+      </Border>
+
+      <Border Classes="surface">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="section-title" Text="数据目录" />
+          <TextBlock FontFamily="Consolas, Menlo, monospace"
+                     Opacity="0.78"
+                     Text="{Binding DataDirectory}"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

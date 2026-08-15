@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="using:FluentAvalonia.UI.Controls"
+             xmlns:viewModels="using:Markstash.App.ViewModels"
+             x:Class="Markstash.App.Views.MainView"
+             x:DataType="viewModels:MainViewModel">
+  <fa:FANavigationView AlwaysShowHeader="False"
+                       CompactModeThresholdWidth="640"
+                       CompactPaneLength="48"
+                       ExpandedModeThresholdWidth="960"
+                       IsBackButtonVisible="False"
+                       IsSettingsVisible="False"
+                       MenuItemsSource="{Binding NavigationItems}"
+                       OpenPaneLength="220"
+                       PaneDisplayMode="Auto"
+                       PaneTitle="{Binding AppTitle}"
+                       SelectedItem="{Binding SelectedNavigationItem, Mode=TwoWay}">
+    <fa:FANavigationView.MenuItemTemplate>
+      <DataTemplate x:DataType="viewModels:NavigationItemViewModel">
+        <fa:FANavigationViewItem Content="{Binding Title}">
+          <fa:FANavigationViewItem.IconSource>
+            <fa:FASymbolIconSource Symbol="{Binding Icon}" />
+          </fa:FANavigationViewItem.IconSource>
+        </fa:FANavigationViewItem>
+      </DataTemplate>
+    </fa:FANavigationView.MenuItemTemplate>
+
+    <fa:FANavigationView.Content>
+      <ContentControl Content="{Binding CurrentPage}"
+                      HorizontalContentAlignment="Stretch"
+                      VerticalContentAlignment="Stretch" />
+    </fa:FANavigationView.Content>
+  </fa:FANavigationView>
+</UserControl>
