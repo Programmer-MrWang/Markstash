@@ -83,7 +83,7 @@ jobs:
           $archive = "artifacts/Markstash-win-x64.zip"
           Compress-Archive -Path "artifacts/publish/*" -DestinationPath $archive
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Markstash-win-x64
           path: artifacts/Markstash-win-x64.zip
@@ -163,7 +163,7 @@ jobs:
           if ($null -eq $apk) { throw "Android publish did not produce a signed APK." }
           Copy-Item $apk.FullName "artifacts/release/Markstash-android-signed.apk"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Markstash-android
           path: artifacts/release/Markstash-android-signed.apk
