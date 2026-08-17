@@ -1,42 +1,63 @@
-using FluentAvalonia.UI.Controls;
+using Markstash.App.Hosting;
+using Markstash.App.Localization;
+using Markstash.App.Navigation;
+using Microsoft.Extensions.Logging;
 
 namespace Markstash.App.ViewModels;
 
-public sealed class MainViewModel : ViewModelBase
+public sealed partial class MainViewModel : ViewModelBase, IDisposable
 {
-    private NavigationItemViewModel _selectedNavigationItem;
+    private readonly IReadOnlyList<NavigationItemViewModel> _allNavigationItems;
+    private readonly INavigationService _navigationService;
+    private NavigationItemViewModel? _selectedNavigationItem;
     private ViewModelBase _currentPage;
 
     public MainViewModel(
-        HomePageViewModel homePage,
-        LibraryPageViewModel libraryPage,
-        SearchPageViewModel searchPage,
-        SettingsPageViewModel settingsPage)
+        INavigationService navigationService,
+        AppStartupOptions startupOptions,
+        ILogger<MainViewModel> logger)
     {
-        NavigationItems =
-        [
-            new("概览", FASymbol.Home, homePage),
-            new("资源库", FASymbol.Library, libraryPage),
-            new("搜索", FASymbol.Find, searchPage),
-            new("设置", FASymbol.Settings, settingsPage),
-        ];
+        _navigationService = navigationService;
+        var navigationItems = navigationService.Routes
+            .Where(route => route.Placement != NavigationPlacement.Hidden)
+            .Select(route => (
+                Route: route,
+                Item: new NavigationItemViewModel(route.Id, route.Title, route.Icon)))
+            .ToArray();
+        _allNavigationItems = navigationItems.Select(pair => pair.Item).ToArray();
+        NavigationItems = navigationItems
+            .Where(pair => pair.Route.Placement == NavigationPlacement.Main)
+            .Select(pair => pair.Item)
+            .ToArray();
+        FooterNavigationItems = navigationItems
+            .Where(pair => pair.Route.Placement == NavigationPlacement.Footer)
+            .Select(pair => pair.Item)
+            .ToArray();
+        _selectedNavigationItem = FindNavigationItem(navigationService.CurrentRoute.Id);
+        _currentPage = navigationService.CurrentPage;
+        navigationService.Navigated += OnNavigated;
 
-        _selectedNavigationItem = NavigationItems[0];
-        _currentPage = _selectedNavigationItem.Page;
+        if (startupOptions.LaunchUri is not null &&
+            !navigationService.TryNavigate(startupOptions.LaunchUri))
+        {
+            LogUnknownLaunchRoute(logger, GetSafeLaunchUri(startupOptions.LaunchUri));
+        }
     }
 
-    public string AppTitle => "Markstash";
+    public string AppTitle => AppStrings.AppName;
 
     public IReadOnlyList<NavigationItemViewModel> NavigationItems { get; }
 
-    public NavigationItemViewModel SelectedNavigationItem
+    public IReadOnlyList<NavigationItemViewModel> FooterNavigationItems { get; }
+
+    public NavigationItemViewModel? SelectedNavigationItem
     {
         get => _selectedNavigationItem;
         set
         {
-            if (value is not null && SetProperty(ref _selectedNavigationItem, value))
+            if (value is not null && value != _selectedNavigationItem)
             {
-                CurrentPage = value.Page;
+                _navigationService.Navigate(value.RouteId);
             }
         }
     }
@@ -46,4 +67,44 @@ public sealed class MainViewModel : ViewModelBase
         get => _currentPage;
         private set => SetProperty(ref _currentPage, value);
     }
+
+    public bool CanGoBack => _navigationService.CanGoBack;
+
+    public bool IsBackButtonVisible =>
+        CanGoBack && _navigationService.CurrentRoute.Placement == NavigationPlacement.Hidden;
+
+    public bool GoBack() => _navigationService.GoBack();
+
+    public void Dispose()
+    {
+        _navigationService.Navigated -= OnNavigated;
+    }
+
+    private void OnNavigated(object? sender, NavigationChangedEventArgs eventArgs)
+    {
+        SelectedNavigationItemCore = FindNavigationItem(eventArgs.Route.Id);
+        CurrentPage = eventArgs.Page;
+        OnPropertyChanged(nameof(CanGoBack));
+        OnPropertyChanged(nameof(IsBackButtonVisible));
+    }
+
+    private NavigationItemViewModel? SelectedNavigationItemCore
+    {
+        set => SetProperty(ref _selectedNavigationItem, value, nameof(SelectedNavigationItem));
+    }
+
+    private NavigationItemViewModel? FindNavigationItem(string routeId) =>
+        _allNavigationItems.FirstOrDefault(item =>
+            item.RouteId.Equals(routeId, StringComparison.OrdinalIgnoreCase));
+
+    private static string GetSafeLaunchUri(Uri uri) =>
+        $"{uri.Scheme}://{uri.Host}{uri.AbsolutePath}";
+
+    [LoggerMessage(
+        EventId = 3201,
+        Level = LogLevel.Warning,
+        Message = "The launch URI does not map to a registered route: {LaunchUri}.")]
+    private static partial void LogUnknownLaunchRoute(
+        ILogger logger,
+        string launchUri);
 }

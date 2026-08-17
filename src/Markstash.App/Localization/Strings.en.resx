@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="AppName" xml:space="preserve"><value>Markstash</value></data>
+  <data name="NavigationHome" xml:space="preserve"><value>Overview</value></data>
+  <data name="NavigationLibrary" xml:space="preserve"><value>Library</value></data>
+  <data name="NavigationSearch" xml:space="preserve"><value>Search</value></data>
+  <data name="NavigationSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="HomeSubtitle" xml:space="preserve"><value>The cross-platform Markstash foundation is ready.</value></data>
+  <data name="HomeFavoritesTitle" xml:space="preserve"><value>Saved items</value></data>
+  <data name="HomeFavoritesEmpty" xml:space="preserve"><value>Waiting for the first content source</value></data>
+  <data name="HomeIndexTitle" xml:space="preserve"><value>Index</value></data>
+  <data name="HomeIndexReady" xml:space="preserve"><value>Ready</value></data>
+  <data name="HomeIndexDescription" xml:space="preserve"><value>Search can grow behind an application-layer boundary</value></data>
+  <data name="RuntimeTitle" xml:space="preserve"><value>Runtime</value></data>
+  <data name="LibraryItemCountFormat" xml:space="preserve"><value>{0} items</value></data>
+  <data name="LibraryNew" xml:space="preserve"><value>New item</value></data>
+  <data name="LibraryEmptyTitle" xml:space="preserve"><value>Your library is empty</value></data>
+  <data name="LibraryEmptyDescription" xml:space="preserve"><value>Bookmarks, files, notes, and AI entry points can grow from here.</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search saved items, notes, and files</value></data>
+  <data name="SearchEmptyTitle" xml:space="preserve"><value>Enter a keyword to search</value></data>
+  <data name="SearchEmptyDescription" xml:space="preserve"><value>The index implementation will connect through the Application layer.</value></data>
+  <data name="SettingsThemeTitle" xml:space="preserve"><value>Theme</value></data>
+  <data name="SettingsThemeDescription" xml:space="preserve"><value>Appearance is saved automatically and shared by every host.</value></data>
+  <data name="SettingsDataDirectoryTitle" xml:space="preserve"><value>Data directory</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="TitleBarMoreOptions" xml:space="preserve"><value>More options</value></data>
+  <data name="AppVersionToolTip" xml:space="preserve"><value>Application version</value></data>
+  <data name="MenuCreateShortcut" xml:space="preserve"><value>Create shortcut</value></data>
+  <data name="MenuLogs" xml:space="preserve"><value>Logs</value></data>
+  <data name="MenuOpenLogsDirectory" xml:space="preserve"><value>Open logs folder</value></data>
+  <data name="MenuOpenApplicationDirectory" xml:space="preserve"><value>Open application folder</value></data>
+  <data name="ShortcutCreatedTitle" xml:space="preserve"><value>Shortcut created</value></data>
+  <data name="ShortcutCreatedMessageFormat" xml:space="preserve"><value>The desktop shortcut was saved to: {0}</value></data>
+  <data name="ActionFailedTitle" xml:space="preserve"><value>Action failed</value></data>
+  <data name="ActionFailedMessageFormat" xml:space="preserve"><value>{0} failed: {1}</value></data>
+  <data name="LogWindowTitle" xml:space="preserve"><value>Logs</value></data>
+  <data name="LogLevelTrace" xml:space="preserve"><value>Trace</value></data>
+  <data name="LogLevelDebug" xml:space="preserve"><value>Debug</value></data>
+  <data name="LogLevelInformation" xml:space="preserve"><value>Information</value></data>
+  <data name="LogLevelWarning" xml:space="preserve"><value>Warning</value></data>
+  <data name="LogLevelError" xml:space="preserve"><value>Error</value></data>
+  <data name="LogLevelCritical" xml:space="preserve"><value>Critical</value></data>
+  <data name="LogSearchPlaceholder" xml:space="preserve"><value>Filter logs…</value></data>
+  <data name="LogColumnTime" xml:space="preserve"><value>Time</value></data>
+  <data name="LogColumnLevel" xml:space="preserve"><value>Level</value></data>
+  <data name="LogColumnCategory" xml:space="preserve"><value>Category</value></data>
+  <data name="LogColumnMessage" xml:space="preserve"><value>Message</value></data>
+  <data name="LogRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="LogCopySelected" xml:space="preserve"><value>Copy selected</value></data>
+  <data name="LogOpenDirectory" xml:space="preserve"><value>Open logs folder</value></data>
+  <data name="LogEntryCountFormat" xml:space="preserve"><value>Showing {0} of {1} entries</value></data>
+  <data name="LogLoading" xml:space="preserve"><value>Loading logs…</value></data>
+  <data name="LogLoadFailed" xml:space="preserve"><value>Unable to load logs. Open the logs folder to inspect the files.</value></data>
+  <data name="OpenLogsDirectoryFailed" xml:space="preserve"><value>Unable to open the logs folder.</value></data>
+  <data name="LogCopyCompletedFormat" xml:space="preserve"><value>Copied {0} log entries.</value></data>
+  <data name="LogNothingSelected" xml:space="preserve"><value>Select one or more log entries first.</value></data>
+  <data name="LogCopyFailed" xml:space="preserve"><value>Unable to copy the selected logs.</value></data>
+</root>

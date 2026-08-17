@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="AppName" xml:space="preserve"><value>Markstash</value></data>
+  <data name="NavigationHome" xml:space="preserve"><value>概览</value></data>
+  <data name="NavigationLibrary" xml:space="preserve"><value>资源库</value></data>
+  <data name="NavigationSearch" xml:space="preserve"><value>搜索</value></data>
+  <data name="NavigationSettings" xml:space="preserve"><value>设置</value></data>
+  <data name="HomeSubtitle" xml:space="preserve"><value>Markstash 的跨平台应用骨架已经就绪。</value></data>
+  <data name="HomeFavoritesTitle" xml:space="preserve"><value>收藏</value></data>
+  <data name="HomeFavoritesEmpty" xml:space="preserve"><value>等待接入第一个资源来源</value></data>
+  <data name="HomeIndexTitle" xml:space="preserve"><value>索引</value></data>
+  <data name="HomeIndexReady" xml:space="preserve"><value>就绪</value></data>
+  <data name="HomeIndexDescription" xml:space="preserve"><value>搜索能力可按功能切片继续扩展</value></data>
+  <data name="RuntimeTitle" xml:space="preserve"><value>运行环境</value></data>
+  <data name="LibraryItemCountFormat" xml:space="preserve"><value>共 {0} 项</value></data>
+  <data name="LibraryNew" xml:space="preserve"><value>新建收藏</value></data>
+  <data name="LibraryEmptyTitle" xml:space="preserve"><value>资源库还是空的</value></data>
+  <data name="LibraryEmptyDescription" xml:space="preserve"><value>后续的书签、文件、笔记或 AI 入口都可以从这里生长。</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>搜索收藏、笔记和文件</value></data>
+  <data name="SearchEmptyTitle" xml:space="preserve"><value>输入关键词开始搜索</value></data>
+  <data name="SearchEmptyDescription" xml:space="preserve"><value>索引实现将通过 Application 层接入。</value></data>
+  <data name="SettingsThemeTitle" xml:space="preserve"><value>主题</value></data>
+  <data name="SettingsThemeDescription" xml:space="preserve"><value>外观会自动保存，并在所有宿主中复用。</value></data>
+  <data name="SettingsDataDirectoryTitle" xml:space="preserve"><value>数据目录</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>跟随系统</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>浅色</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>深色</value></data>
+  <data name="TitleBarMoreOptions" xml:space="preserve"><value>更多选项</value></data>
+  <data name="AppVersionToolTip" xml:space="preserve"><value>应用版本</value></data>
+  <data name="MenuCreateShortcut" xml:space="preserve"><value>创建快捷方式</value></data>
+  <data name="MenuLogs" xml:space="preserve"><value>日志</value></data>
+  <data name="MenuOpenLogsDirectory" xml:space="preserve"><value>打开日志目录</value></data>
+  <data name="MenuOpenApplicationDirectory" xml:space="preserve"><value>打开应用目录</value></data>
+  <data name="ShortcutCreatedTitle" xml:space="preserve"><value>快捷方式已创建</value></data>
+  <data name="ShortcutCreatedMessageFormat" xml:space="preserve"><value>桌面快捷方式已保存到：{0}</value></data>
+  <data name="ActionFailedTitle" xml:space="preserve"><value>操作失败</value></data>
+  <data name="ActionFailedMessageFormat" xml:space="preserve"><value>{0}失败：{1}</value></data>
+  <data name="LogWindowTitle" xml:space="preserve"><value>日志</value></data>
+  <data name="LogLevelTrace" xml:space="preserve"><value>追踪</value></data>
+  <data name="LogLevelDebug" xml:space="preserve"><value>调试</value></data>
+  <data name="LogLevelInformation" xml:space="preserve"><value>信息</value></data>
+  <data name="LogLevelWarning" xml:space="preserve"><value>警告</value></data>
+  <data name="LogLevelError" xml:space="preserve"><value>错误</value></data>
+  <data name="LogLevelCritical" xml:space="preserve"><value>严重</value></data>
+  <data name="LogSearchPlaceholder" xml:space="preserve"><value>筛选日志…</value></data>
+  <data name="LogColumnTime" xml:space="preserve"><value>时间</value></data>
+  <data name="LogColumnLevel" xml:space="preserve"><value>等级</value></data>
+  <data name="LogColumnCategory" xml:space="preserve"><value>区域</value></data>
+  <data name="LogColumnMessage" xml:space="preserve"><value>内容</value></data>
+  <data name="LogRefresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="LogCopySelected" xml:space="preserve"><value>复制选中</value></data>
+  <data name="LogOpenDirectory" xml:space="preserve"><value>打开日志目录</value></data>
+  <data name="LogEntryCountFormat" xml:space="preserve"><value>显示 {0} 条，共读取 {1} 条</value></data>
+  <data name="LogLoading" xml:space="preserve"><value>正在读取日志…</value></data>
+  <data name="LogLoadFailed" xml:space="preserve"><value>读取日志失败，请打开日志目录检查文件。</value></data>
+  <data name="OpenLogsDirectoryFailed" xml:space="preserve"><value>无法打开日志目录。</value></data>
+  <data name="LogCopyCompletedFormat" xml:space="preserve"><value>已复制 {0} 条日志。</value></data>
+  <data name="LogNothingSelected" xml:space="preserve"><value>请先选择要复制的日志。</value></data>
+  <data name="LogCopyFailed" xml:space="preserve"><value>复制日志失败。</value></data>
+</root>

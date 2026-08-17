@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:localization="using:Markstash.App.Localization"
              xmlns:viewModels="using:Markstash.App.ViewModels"
              x:Class="Markstash.App.Views.SettingsPageView"
              x:DataType="viewModels:SettingsPageViewModel">
@@ -9,10 +10,10 @@
 
       <Border Classes="surface">
         <Grid ColumnDefinitions="*,220" RowDefinitions="Auto,Auto" ColumnSpacing="18" RowSpacing="8">
-          <TextBlock Classes="section-title" Text="主题" />
+          <TextBlock Classes="section-title" Text="{x:Static localization:AppStrings.SettingsThemeTitle}" />
           <TextBlock Grid.Row="1"
                      Opacity="0.68"
-                     Text="外观会自动保存，并在所有宿主中复用。"
+                     Text="{x:Static localization:AppStrings.SettingsThemeDescription}"
                      TextWrapping="Wrap" />
           <ComboBox Grid.Column="1"
                     Grid.RowSpan="2"
@@ -30,7 +31,7 @@
 
       <Border Classes="surface">
         <StackPanel Spacing="8">
-          <TextBlock Classes="section-title" Text="数据目录" />
+          <TextBlock Classes="section-title" Text="{x:Static localization:AppStrings.SettingsDataDirectoryTitle}" />
           <TextBlock FontFamily="Consolas, Menlo, monospace"
                      Opacity="0.78"
                      Text="{Binding DataDirectory}"

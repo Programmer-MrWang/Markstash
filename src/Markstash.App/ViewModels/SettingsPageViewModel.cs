@@ -1,5 +1,6 @@
 using Markstash.Application.Abstractions;
 using Markstash.Application.Preferences;
+using Markstash.App.Localization;
 using Markstash.Domain.Preferences;
 
 namespace Markstash.App.ViewModels;
@@ -14,20 +15,20 @@ public sealed class SettingsPageViewModel : ViewModelBase
         IAppPaths appPaths)
     {
         _preferencesService = preferencesService;
-        DataDirectory = appPaths.DataDirectory;
+        DataDirectory = appPaths.RootDirectory;
 
         ThemeOptions =
         [
-            new(ThemePreference.System, "跟随系统"),
-            new(ThemePreference.Light, "浅色"),
-            new(ThemePreference.Dark, "深色"),
+            new(ThemePreference.System, AppStrings.ThemeSystem),
+            new(ThemePreference.Light, AppStrings.ThemeLight),
+            new(ThemePreference.Dark, AppStrings.ThemeDark),
         ];
 
         _selectedTheme = ThemeOptions.Single(option =>
             option.Value == preferencesService.Current.Theme);
     }
 
-    public string Title => "设置";
+    public string Title => AppStrings.NavigationSettings;
 
     public string DataDirectory { get; }
 
@@ -40,7 +41,12 @@ public sealed class SettingsPageViewModel : ViewModelBase
         {
             if (SetProperty(ref _selectedTheme, value))
             {
-                _preferencesService.SetTheme(value.Value);
+                if (!_preferencesService.SetTheme(value.Value))
+                {
+                    _selectedTheme = ThemeOptions.Single(option =>
+                        option.Value == _preferencesService.Current.Theme);
+                    OnPropertyChanged();
+                }
             }
         }
     }

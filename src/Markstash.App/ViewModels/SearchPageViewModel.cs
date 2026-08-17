@@ -1,10 +1,12 @@
+using Markstash.App.Localization;
+
 namespace Markstash.App.ViewModels;
 
 public sealed class SearchPageViewModel : ViewModelBase
 {
     private string _query = string.Empty;
 
-    public string Title => "搜索";
+    public string Title => AppStrings.NavigationSearch;
 
     public string Query
     {

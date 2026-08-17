@@ -5,7 +5,7 @@
     <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
     <ApplicationId>io.github.programmermrwang.markstash</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>$(VersionPrefix)</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
   </PropertyGroup>

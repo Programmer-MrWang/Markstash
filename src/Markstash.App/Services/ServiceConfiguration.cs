@@ -1,30 +1,92 @@
+using Markstash.App.Hosting;
+using Markstash.App.Localization;
+using Markstash.App.Navigation;
 using Markstash.App.ViewModels;
+using Markstash.App.Views;
 using Markstash.Application;
+using Markstash.Application.Runtime;
 using Markstash.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using FluentAvalonia.UI.Controls;
 
 namespace Markstash.App.Services;
 
 internal static class ServiceConfiguration
 {
-    public static ServiceProvider Create()
+    public static IHost CreateHost(AppStartupOptions startupOptions)
     {
-        var services = new ServiceCollection();
+        startupOptions.ApplyEnvironmentOverrides();
 
-        services.AddMarkstashApplication();
-        services.AddMarkstashInfrastructure();
-        services.AddSingleton<IThemeService, AvaloniaThemeService>();
+        return Host.CreateDefaultBuilder()
+            .UseContentRoot(AppContext.BaseDirectory)
+            .UseDefaultServiceProvider(options =>
+            {
+                options.ValidateOnBuild = true;
+                options.ValidateScopes = true;
+            })
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.SetMinimumLevel(startupOptions.Verbose
+                    ? LogLevel.Trace
+                    : LogLevel.Information);
+                logging.AddDebug();
+                logging.AddJsonConsole(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.fffK";
+                });
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(startupOptions);
+                services.AddMarkstashApplication();
+                services.AddMarkstashInfrastructure();
+                services.AddSingleton<IThemeService, AvaloniaThemeService>();
 
-        services.AddTransient<HomePageViewModel>();
-        services.AddTransient<LibraryPageViewModel>();
-        services.AddTransient<SearchPageViewModel>();
-        services.AddTransient<SettingsPageViewModel>();
-        services.AddTransient<MainViewModel>();
+                services.AddSingleton(new NavigationRoute(
+                    "home",
+                    AppStrings.NavigationHome,
+                    FASymbol.Home,
+                    typeof(HomePageViewModel)));
+                services.AddSingleton(new NavigationRoute(
+                    "library",
+                    AppStrings.NavigationLibrary,
+                    FASymbol.Library,
+                    typeof(LibraryPageViewModel)));
+                services.AddSingleton(new NavigationRoute(
+                    "search",
+                    AppStrings.NavigationSearch,
+                    FASymbol.Find,
+                    typeof(SearchPageViewModel)));
+                services.AddSingleton(new NavigationRoute(
+                    "settings",
+                    AppStrings.NavigationSettings,
+                    FASymbol.Settings,
+                    typeof(SettingsPageViewModel),
+                    NavigationPlacement.Footer));
+                services.AddSingleton<INavigationService, NavigationService>();
 
-        return services.BuildServiceProvider(new ServiceProviderOptions
-        {
-            ValidateOnBuild = true,
-            ValidateScopes = true,
-        });
+                services.AddSingleton<AppLifecycleService>();
+                services.AddSingleton<IAppLifecycle>(provider =>
+                    provider.GetRequiredService<AppLifecycleService>());
+                services.AddSingleton<IHostedService>(provider =>
+                    provider.GetRequiredService<AppLifecycleService>());
+
+                services.AddSingleton<AppExceptionHandler>();
+                services.AddSingleton<IHostedService>(provider =>
+                    provider.GetRequiredService<AppExceptionHandler>());
+
+                services.AddTransient<HomePageViewModel>();
+                services.AddTransient<LibraryPageViewModel>();
+                services.AddTransient<SearchPageViewModel>();
+                services.AddTransient<SettingsPageViewModel>();
+                services.AddSingleton<LogWindowViewModel>();
+                services.AddSingleton<MainViewModel>();
+                services.AddSingleton<MainWindow>();
+            })
+            .Build();
     }
 }

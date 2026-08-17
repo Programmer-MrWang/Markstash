@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:localization="using:Markstash.App.Localization"
              xmlns:viewModels="using:Markstash.App.ViewModels"
              x:Class="Markstash.App.Views.SearchPageView"
              x:DataType="viewModels:SearchPageViewModel">
@@ -11,7 +12,7 @@
              MaxWidth="760"
              HorizontalAlignment="Stretch"
              Text="{Binding Query, Mode=TwoWay}"
-             PlaceholderText="搜索收藏、笔记和文件" />
+             PlaceholderText="{x:Static localization:AppStrings.SearchPlaceholder}" />
 
     <Border Grid.Row="2"
             Classes="surface"
@@ -20,8 +21,11 @@
       <StackPanel HorizontalAlignment="Center"
                   VerticalAlignment="Center"
                   Spacing="8">
-        <TextBlock FontSize="18" FontWeight="SemiBold" Text="输入关键词开始搜索" />
-        <TextBlock Opacity="0.68" Text="索引实现将通过 Application 层接入。" />
+        <TextBlock FontSize="18"
+                   FontWeight="SemiBold"
+                   Text="{x:Static localization:AppStrings.SearchEmptyTitle}" />
+        <TextBlock Opacity="0.68"
+                   Text="{x:Static localization:AppStrings.SearchEmptyDescription}" />
       </StackPanel>
     </Border>
   </Grid>

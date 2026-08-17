@@ -6,7 +6,15 @@ public interface IPreferencesService
 {
     UserPreferences Current { get; }
 
+    PreferencesLoadStatus LoadStatus { get; }
+
+    string? LastPersistenceError { get; }
+
+    bool IsWritable { get; }
+
     event EventHandler<UserPreferences>? Changed;
 
-    void SetTheme(ThemePreference theme);
+    event EventHandler<string>? PersistenceFailed;
+
+    bool SetTheme(ThemePreference theme);
 }
