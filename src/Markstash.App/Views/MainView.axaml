@@ -14,7 +14,7 @@
                        IsBackButtonVisible="{Binding IsBackButtonVisible}"
                        IsSettingsVisible="False"
                        MenuItemsSource="{Binding NavigationItems}"
-                       OpenPaneLength="220"
+                       OpenPaneLength="145"
                        PaneDisplayMode="Auto"
                        PaneTitle="{Binding AppTitle}"
                        SelectedItem="{Binding SelectedNavigationItem, Mode=TwoWay}">

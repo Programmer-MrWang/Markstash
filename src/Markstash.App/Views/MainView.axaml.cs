@@ -11,7 +11,7 @@ public partial class MainView : UserControl
         InitializeComponent();
         if (OperatingSystem.IsWindows())
         {
-            NavigationView.OpenPaneLength = 283;
+            NavigationView.OpenPaneLength = 218;
             NavigationView.PaneTitle = null;
         }
     }
