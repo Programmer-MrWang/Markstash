@@ -38,8 +38,8 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -56,8 +56,8 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -83,7 +83,7 @@ jobs:
           $archive = "artifacts/Markstash-win-x64.zip"
           Compress-Archive -Path "artifacts/publish/*" -DestinationPath $archive
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Markstash-win-x64
           path: artifacts/Markstash-win-x64.zip
@@ -95,11 +95,11 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: microsoft
           java-version: 17
@@ -163,7 +163,7 @@ jobs:
           if ($null -eq $apk) { throw "Android publish did not produce a signed APK." }
           Copy-Item $apk.FullName "artifacts/release/Markstash-android-signed.apk"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Markstash-android
           path: artifacts/release/Markstash-android-signed.apk
@@ -176,7 +176,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: Markstash-*
           path: release-assets
