@@ -6,17 +6,19 @@
                        xmlns:views="using:Markstash.App.Views"
                        xmlns:windowing="using:FluentAvalonia.UI.Windowing"
                        x:Class="Markstash.App.Views.MainWindow"
-                       Width="1240"
-                       Height="550"
+                       Width="1200"
+                       Height="700"
                        MinWidth="720"
                        MinHeight="520"
                        Title="{x:Static localization:AppStrings.AppName}"
                        WindowStartupLocation="CenterScreen">
   <Grid Background="Transparent" RowDefinitions="48,*">
-    <Grid Grid.Row="0"
+    <Grid x:Name="TitleBarRoot"
+          Grid.Row="0"
           Margin="16,0,140,0"
           Background="Transparent"
-          ColumnDefinitions="Auto,*,Auto">
+          ColumnDefinitions="Auto,*,Auto"
+          PointerPressed="OnTitleBarPointerPressed">
       <StackPanel Orientation="Horizontal"
                   Spacing="12"
                   VerticalAlignment="Center">
@@ -32,7 +34,8 @@
                    Text="{x:Static localization:AppStrings.AppName}" />
       </StackPanel>
 
-      <StackPanel Grid.Column="2"
+      <StackPanel x:Name="TitleBarActions"
+                  Grid.Column="2"
                   Orientation="Horizontal"
                   Spacing="8"
                   VerticalAlignment="Center">

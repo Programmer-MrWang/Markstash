@@ -1,3 +1,5 @@
+using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Windowing;
@@ -33,6 +35,30 @@ public sealed partial class MainWindow : FAAppWindow
         _logger = logger;
         DataContext = mainViewModel;
         CreateShortcutMenuItem.IsVisible = desktopIntegration.IsSupported;
+    }
+
+    private void OnTitleBarPointerPressed(
+        object? sender,
+        PointerPressedEventArgs eventArgs)
+    {
+        if (!OperatingSystem.IsWindows() ||
+            TitleBarActions.IsPointerOver ||
+            !eventArgs.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        if (eventArgs.ClickCount == 2)
+        {
+            WindowState = WindowState == WindowState.Maximized
+                ? WindowState.Normal
+                : WindowState.Maximized;
+            eventArgs.Handled = true;
+            return;
+        }
+
+        BeginMoveDrag(eventArgs);
+        eventArgs.Handled = true;
     }
 
     private void OnCreateShortcutClick(object? sender, RoutedEventArgs eventArgs)

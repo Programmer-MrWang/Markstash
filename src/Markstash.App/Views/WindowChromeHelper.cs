@@ -19,14 +19,21 @@ internal static class WindowChromeHelper
             return;
         }
 
-        window.TitleBar.Height = TitleBarHeight;
-        window.TitleBar.ExtendsContentIntoTitleBar = extendsContentIntoTitleBar;
-        window.TitleBar.BackgroundColor = Colors.Transparent;
-        window.TitleBar.InactiveBackgroundColor = Colors.Transparent;
-        window.TitleBar.ButtonBackgroundColor = Colors.Transparent;
-        window.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+        ApplyTitleBar(window, extendsContentIntoTitleBar);
+        window.Opened -= RefreshTitleBar;
+        window.Opened += RefreshTitleBar;
         window.Loaded -= ApplyWindowsMaterial;
         window.Loaded += ApplyWindowsMaterial;
+    }
+
+    private static void RefreshTitleBar(object? sender, EventArgs eventArgs)
+    {
+        if (sender is not FAAppWindow window || !OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        ApplyTitleBar(window, window.TitleBar.ExtendsContentIntoTitleBar);
     }
 
     private static void ApplyWindowsMaterial(object? sender, RoutedEventArgs eventArgs)
@@ -43,5 +50,18 @@ internal static class WindowChromeHelper
             WindowTransparencyLevel.AcrylicBlur,
         ];
         window.Background = Brushes.Transparent;
+        ApplyTitleBar(window, window.TitleBar.ExtendsContentIntoTitleBar);
+    }
+
+    private static void ApplyTitleBar(
+        FAAppWindow window,
+        bool extendsContentIntoTitleBar)
+    {
+        window.TitleBar.ExtendsContentIntoTitleBar = extendsContentIntoTitleBar;
+        window.TitleBar.Height = TitleBarHeight;
+        window.TitleBar.BackgroundColor = Colors.Transparent;
+        window.TitleBar.InactiveBackgroundColor = Colors.Transparent;
+        window.TitleBar.ButtonBackgroundColor = Colors.Transparent;
+        window.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
     }
 }
