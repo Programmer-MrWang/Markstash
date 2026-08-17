@@ -1,0 +1,198 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.semver.outputs.version }}
+
+    steps:
+      - name: Validate and export SemVer
+        id: semver
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          semver_regex='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
+          if [[ ! "$RELEASE_TAG" =~ $semver_regex ]]; then
+            printf 'Release tag must be vMAJOR.MINOR.PATCH with valid SemVer 2.0.0 metadata: %s\n' "$RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Release tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore tests
+        run: dotnet restore tests/Markstash.Tests/Markstash.Tests.csproj --configfile NuGet.Config
+
+      - name: Run tests
+        run: dotnet test tests/Markstash.Tests/Markstash.Tests.csproj --configuration Release --no-restore
+
+  desktop:
+    name: Windows (win-x64)
+    needs: [validate, test]
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: >-
+          dotnet restore src/Markstash.Desktop/Markstash.Desktop.csproj
+          --runtime win-x64
+          --configfile NuGet.Config
+
+      - name: Publish
+        run: >-
+          dotnet publish src/Markstash.Desktop/Markstash.Desktop.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --no-restore
+          --output artifacts/publish
+          --property:Version=${{ needs.validate.outputs.version }}
+
+      - name: Archive Windows publish
+        shell: pwsh
+        run: |
+          $archive = "artifacts/Markstash-win-x64.zip"
+          Compress-Archive -Path "artifacts/publish/*" -DestinationPath $archive
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Markstash-win-x64
+          path: artifacts/Markstash-win-x64.zip
+
+  android:
+    name: Android
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: 17
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Restore
+        run: dotnet restore src/Markstash.Android/Markstash.Android.csproj --configfile NuGet.Config
+
+      - name: Validate Android signing and prepare keystore
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "$KEYSTORE_BASE64" ]] || missing+=(ANDROID_KEYSTORE_BASE64)
+          [[ -n "$STORE_PASSWORD" ]] || missing+=(ANDROID_SIGNING_STORE_PASSWORD)
+          [[ -n "$KEY_ALIAS" ]] || missing+=(ANDROID_SIGNING_KEY_ALIAS)
+          [[ -n "$KEY_PASSWORD" ]] || missing+=(ANDROID_SIGNING_KEY_PASSWORD)
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing Android signing secrets: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/markstash.keystore"
+          test -s "$RUNNER_TEMP/markstash.keystore"
+
+      - name: Publish signed APK
+        env:
+          ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        run: >-
+          dotnet publish src/Markstash.Android/Markstash.Android.csproj
+          --configuration Release
+          --no-restore
+          --property:AndroidSdkDirectory="$ANDROID_HOME"
+          --property:AndroidPackageFormat=apk
+          --property:Version=${{ needs.validate.outputs.version }}
+          --property:ApplicationDisplayVersion=${{ needs.validate.outputs.version }}
+          --property:ApplicationVersion=${{ github.run_number }}
+          --property:AndroidKeyStore=true
+          --property:AndroidSigningKeyStore="$RUNNER_TEMP/markstash.keystore"
+          --property:AndroidSigningStorePass="$ANDROID_SIGNING_STORE_PASSWORD"
+          --property:AndroidSigningKeyAlias="$ANDROID_SIGNING_KEY_ALIAS"
+          --property:AndroidSigningKeyPass="$ANDROID_SIGNING_KEY_PASSWORD"
+
+      - name: Collect signed APK
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/release | Out-Null
+          $apk = Get-ChildItem src/Markstash.Android/bin/Release -Recurse -Filter *.apk |
+            Where-Object Name -Like "*-Signed.apk" |
+            Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+          if ($null -eq $apk) { throw "Android publish did not produce a signed APK." }
+          Copy-Item $apk.FullName "artifacts/release/Markstash-android-signed.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Markstash-android
+          path: artifacts/release/Markstash-android-signed.apk
+
+  github-release:
+    name: GitHub release
+    needs: [validate, test, desktop, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Markstash-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          Get-ChildItem release-assets -File |
+            Where-Object Name -ne "SHA256SUMS.txt" |
+            ForEach-Object {
+              $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              "$hash  $($_.Name)"
+            } | Set-Content release-assets/SHA256SUMS.txt
+          $assets = Get-ChildItem release-assets -File | ForEach-Object FullName
+          gh release create $env:GITHUB_REF_NAME $assets --generate-notes --verify-tag

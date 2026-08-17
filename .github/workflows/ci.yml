@@ -5,17 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   desktop:
-    name: Desktop (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -32,11 +33,25 @@ jobs:
         run: dotnet build src/Markstash.Desktop/Markstash.Desktop.csproj --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test tests/Markstash.Tests/Markstash.Tests.csproj --configuration Release --no-restore
+        run: >-
+          dotnet test tests/Markstash.Tests/Markstash.Tests.csproj
+          --configuration Release
+          --no-restore
+          --collect:"XPlat Code Coverage"
+          --results-directory artifacts/TestResults
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-windows
+          path: artifacts/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: warn
 
   android:
     name: Android
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
