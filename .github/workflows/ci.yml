@@ -50,10 +50,7 @@ jobs:
           New-Item -ItemType Directory -Force artifacts | Out-Null
           Compress-Archive -Path "artifacts/windows-publish/*" -DestinationPath "artifacts/Markstash-windows.zip"
 
-      - uses: actions/upload-artifact@v4
-
-      - name: Upload coverage
-        if: always()
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v7
         with:
           name: Markstash-windows
