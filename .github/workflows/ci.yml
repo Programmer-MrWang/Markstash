@@ -26,27 +26,35 @@ jobs:
 
       - name: Restore
         run: |
-          dotnet restore src/Markstash.Desktop/Markstash.Desktop.csproj --configfile NuGet.Config
+          dotnet restore src/Markstash.Desktop/Markstash.Desktop.csproj --runtime win-x64 --configfile NuGet.Config
           dotnet restore tests/Markstash.Tests/Markstash.Tests.csproj --configfile NuGet.Config
 
       - name: Build desktop host
         run: dotnet build src/Markstash.Desktop/Markstash.Desktop.csproj --configuration Release --no-restore
 
       - name: Test
-        run: >-
-          dotnet test tests/Markstash.Tests/Markstash.Tests.csproj
-          --configuration Release
-          --no-restore
-          --collect:"XPlat Code Coverage"
-          --results-directory artifacts/TestResults
+        run: dotnet test tests/Markstash.Tests/Markstash.Tests.csproj --configuration Release --no-restore
 
-      - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Publish Windows application
+        run: >-
+          dotnet publish src/Markstash.Desktop/Markstash.Desktop.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --no-restore
+          --output artifacts/windows-publish
+
+      - name: Archive Windows application
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          Compress-Archive -Path "artifacts/windows-publish/*" -DestinationPath "artifacts/Markstash-windows.zip"
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: coverage-windows
-          path: artifacts/TestResults/**/coverage.cobertura.xml
-          if-no-files-found: warn
+          name: Markstash-windows
+          path: artifacts/Markstash-windows.zip
+          if-no-files-found: error
 
   android:
     name: Android
@@ -69,5 +77,26 @@ jobs:
       - name: Restore
         run: dotnet restore src/Markstash.Android/Markstash.Android.csproj --configfile NuGet.Config
 
-      - name: Build APK
-        run: dotnet build src/Markstash.Android/Markstash.Android.csproj --configuration Release --no-restore --property:AndroidSdkDirectory="$ANDROID_HOME"
+      - name: Publish APK
+        run: >-
+          dotnet publish src/Markstash.Android/Markstash.Android.csproj
+          --configuration Release
+          --no-restore
+          --property:AndroidSdkDirectory="$ANDROID_HOME"
+          --property:AndroidPackageFormat=apk
+
+      - name: Collect APK
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          $apk = Get-ChildItem src/Markstash.Android/bin/Release -Recurse -Filter *.apk |
+            Sort-Object LastWriteTimeUtc -Descending |
+            Select-Object -First 1
+          if ($null -eq $apk) { throw "Android publish did not produce an APK." }
+          Copy-Item $apk.FullName "artifacts/Markstash-android.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Markstash-android
+          path: artifacts/Markstash-android.apk
+          if-no-files-found: error
