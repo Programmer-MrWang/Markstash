@@ -1,0 +1,45 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:styling="using:FluentAvalonia.Styling"
+             xmlns:home="using:Markstash.App.Features.Home"
+             xmlns:library="using:Markstash.App.Features.Library"
+             xmlns:search="using:Markstash.App.Features.Search"
+             xmlns:settings="using:Markstash.App.Features.Settings"
+             x:Class="Markstash.App.App"
+             RequestedThemeVariant="Default">
+  <Application.DataTemplates>
+    <DataTemplate DataType="home:HomePageViewModel">
+      <home:HomePageView />
+    </DataTemplate>
+    <DataTemplate DataType="library:LibraryPageViewModel">
+      <library:LibraryPageView />
+    </DataTemplate>
+    <DataTemplate DataType="search:SearchPageViewModel">
+      <search:SearchPageView />
+    </DataTemplate>
+    <DataTemplate DataType="settings:SettingsPageViewModel">
+      <settings:SettingsPageView />
+    </DataTemplate>
+  </Application.DataTemplates>
+
+  <Application.Styles>
+    <styling:FluentAvaloniaTheme PreferSystemTheme="True"
+                                  PreferUserAccentColor="True" />
+
+    <Style Selector="TextBlock.page-title">
+      <Setter Property="FontSize" Value="28" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.section-title">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.surface">
+      <Setter Property="Background" Value="#0F808080" />
+      <Setter Property="BorderBrush" Value="#30808080" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="18" />
+    </Style>
+  </Application.Styles>
+</Application>

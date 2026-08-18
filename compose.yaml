@@ -1,9 +1,0 @@
-services:
-  backend:
-    build:
-      context: .
-      dockerfile: src/Markstash.Backend/Dockerfile
-    environment:
-      Markstash__Backend__ExposeDiagnostics: "false"
-    ports:
-      - "5080:8080"

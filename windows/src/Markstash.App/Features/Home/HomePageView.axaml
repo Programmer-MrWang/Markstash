@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:localization="using:Markstash.App.Localization"
+             xmlns:viewModels="using:Markstash.App.Features.Home"
+             x:Class="Markstash.App.Features.Home.HomePageView"
+             x:DataType="viewModels:HomePageViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28" Spacing="24">
+      <StackPanel Spacing="6">
+        <TextBlock Classes="page-title" Text="{Binding Title}" />
+        <TextBlock Opacity="0.68"
+                   Text="{x:Static localization:AppStrings.HomeSubtitle}" />
+      </StackPanel>
+
+      <Grid ColumnDefinitions="*,*"
+            RowDefinitions="Auto,Auto"
+            ColumnSpacing="14"
+            RowSpacing="14">
+        <Border Grid.Row="0" Grid.Column="0" Classes="surface">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section-title" Text="{x:Static localization:AppStrings.HomeFavoritesTitle}" />
+            <TextBlock FontSize="32" FontWeight="SemiBold" Text="0" />
+            <TextBlock Opacity="0.68" Text="{x:Static localization:AppStrings.HomeFavoritesEmpty}" />
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Row="0" Grid.Column="1" Classes="surface">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section-title" Text="{x:Static localization:AppStrings.HomeIndexTitle}" />
+            <TextBlock FontSize="32" FontWeight="SemiBold" Text="{x:Static localization:AppStrings.HomeIndexReady}" />
+            <TextBlock Opacity="0.68" Text="{x:Static localization:AppStrings.HomeIndexDescription}" />
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="surface">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section-title" Text="{x:Static localization:AppStrings.RuntimeTitle}" />
+            <TextBlock Text="{Binding RuntimeDescription}" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

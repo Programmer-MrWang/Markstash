@@ -44,14 +44,10 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore tests
-        run: |
-          dotnet restore tests/Markstash.Tests/Markstash.Tests.csproj --configfile NuGet.Config
-          dotnet restore tests/Markstash.Backend.Tests/Markstash.Backend.Tests.csproj --configfile NuGet.Config
+        run: dotnet restore windows/tests/Markstash.Tests/Markstash.Tests.csproj --configfile windows/NuGet.Config
 
       - name: Run tests
-        run: |
-          dotnet test tests/Markstash.Tests/Markstash.Tests.csproj --configuration Release --no-restore
-          dotnet test tests/Markstash.Backend.Tests/Markstash.Backend.Tests.csproj --configuration Release --no-restore
+        run: dotnet test windows/tests/Markstash.Tests/Markstash.Tests.csproj --configuration Release --no-restore
 
   desktop:
     name: Windows (win-x64)
@@ -67,13 +63,13 @@ jobs:
 
       - name: Restore
         run: >-
-          dotnet restore src/Markstash.Desktop/Markstash.Desktop.csproj
+          dotnet restore windows/src/Markstash.Desktop/Markstash.Desktop.csproj
           --runtime win-x64
-          --configfile NuGet.Config
+          --configfile windows/NuGet.Config
 
       - name: Publish
         run: >-
-          dotnet publish src/Markstash.Desktop/Markstash.Desktop.csproj
+          dotnet publish windows/src/Markstash.Desktop/Markstash.Desktop.csproj
           --configuration Release
           --runtime win-x64
           --self-contained true
@@ -91,42 +87,6 @@ jobs:
         with:
           name: Markstash-win-x64
           path: artifacts/Markstash-win-x64.zip
-
-  backend:
-    name: Backend (linux-x64)
-    needs: [validate, test]
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restore
-        run: >-
-          dotnet restore src/Markstash.Backend/Markstash.Backend.csproj
-          --runtime linux-x64
-          --configfile NuGet.Config
-
-      - name: Publish
-        run: >-
-          dotnet publish src/Markstash.Backend/Markstash.Backend.csproj
-          --configuration Release
-          --runtime linux-x64
-          --self-contained true
-          --no-restore
-          --output artifacts/backend
-          --property:Version=${{ needs.validate.outputs.version }}
-
-      - name: Archive backend
-        run: tar -C artifacts/backend -czf artifacts/Markstash-backend-linux-x64.tar.gz .
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: Markstash-backend-linux-x64
-          path: artifacts/Markstash-backend-linux-x64.tar.gz
 
   android:
     name: Android
@@ -149,7 +109,6 @@ jobs:
           STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
-          API_BASE_URL: ${{ vars.MARKSTASH_API_BASE_URL }}
         run: |
           set -euo pipefail
           missing=()
@@ -157,16 +116,10 @@ jobs:
           [[ -n "$STORE_PASSWORD" ]] || missing+=(ANDROID_SIGNING_STORE_PASSWORD)
           [[ -n "$KEY_ALIAS" ]] || missing+=(ANDROID_SIGNING_KEY_ALIAS)
           [[ -n "$KEY_PASSWORD" ]] || missing+=(ANDROID_SIGNING_KEY_PASSWORD)
-          [[ -n "$API_BASE_URL" ]] || missing+=(MARKSTASH_API_BASE_URL)
           if (( ${#missing[@]} > 0 )); then
             printf 'Missing Android signing secrets: %s\n' "${missing[*]}" >&2
             exit 1
           fi
-          if [[ "$API_BASE_URL" != https://* ]]; then
-            printf 'MARKSTASH_API_BASE_URL must use HTTPS: %s\n' "$API_BASE_URL" >&2
-            exit 1
-          fi
-
           umask 077
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/markstash.keystore"
           test -s "$RUNNER_TEMP/markstash.keystore"
@@ -177,19 +130,20 @@ jobs:
           MARKSTASH_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           MARKSTASH_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           MARKSTASH_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
-          API_BASE_URL: ${{ vars.MARKSTASH_API_BASE_URL }}
-        working-directory: android-native
+        working-directory: android
         run: >-
-          bash ./gradlew :app:assembleRelease
+          bash ./gradlew
+          :core:model:testDebugUnitTest
+          :core:platform:testDebugUnitTest
+          :app:assembleRelease
           -Pmarkstash.versionName=${{ needs.validate.outputs.version }}
           -Pmarkstash.versionCode=${{ github.run_number }}
-          -Pmarkstash.apiBaseUrl="$API_BASE_URL"
           --no-configuration-cache
 
       - name: Collect signed APK
         run: |
           mkdir -p artifacts/release
-          cp android-native/app/build/outputs/apk/release/app-release.apk artifacts/release/Markstash-android-signed.apk
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/release/Markstash-android-signed.apk
 
       - uses: actions/upload-artifact@v7
         with:
@@ -198,7 +152,7 @@ jobs:
 
   github-release:
     name: GitHub release
-    needs: [validate, test, desktop, backend, android]
+    needs: [validate, test, desktop, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write

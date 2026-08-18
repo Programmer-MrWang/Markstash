@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:localization="using:Markstash.App.Localization"
+             xmlns:viewModels="using:Markstash.App.Features.Search"
+             x:Class="Markstash.App.Features.Search.SearchPageView"
+             x:DataType="viewModels:SearchPageViewModel">
+  <Grid RowDefinitions="Auto,Auto,*" Margin="28">
+    <TextBlock Classes="page-title" Text="{Binding Title}" />
+
+    <TextBox Grid.Row="1"
+             Margin="0,22,0,0"
+             MaxWidth="760"
+             HorizontalAlignment="Stretch"
+             Text="{Binding Query, Mode=TwoWay}"
+             PlaceholderText="{x:Static localization:AppStrings.SearchPlaceholder}" />
+
+    <Border Grid.Row="2"
+            Classes="surface"
+            Margin="0,18,0,0"
+            MinHeight="220">
+      <StackPanel HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Spacing="8">
+        <TextBlock FontSize="18"
+                   FontWeight="SemiBold"
+                   Text="{x:Static localization:AppStrings.SearchEmptyTitle}" />
+        <TextBlock Opacity="0.68"
+                   Text="{x:Static localization:AppStrings.SearchEmptyDescription}" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

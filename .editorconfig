@@ -16,7 +16,10 @@ csharp_style_var_for_built_in_types = false:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_style_var_elsewhere = false:suggestion
 
-[src/Markstash.App/ViewModels/*.cs]
+[windows/src/Markstash.App/ViewModels/*.cs]
+dotnet_diagnostic.CA1822.severity = none
+
+[windows/src/Markstash.App/Features/**/*.cs]
 dotnet_diagnostic.CA1822.severity = none
 
 [*.{axaml,csproj,props,targets,slnx,xml}]

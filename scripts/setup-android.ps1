@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$androidRoot = Join-Path $repoRoot "android-native"
+$androidRoot = Join-Path $repoRoot "android"
 
 if ([string]::IsNullOrWhiteSpace($JavaSdkDirectory)) {
     $JavaSdkDirectory = Get-ChildItem "C:\Program Files\Microsoft" -Directory -Filter "jdk-21*" |
@@ -26,6 +26,10 @@ $env:JAVA_HOME = $JavaSdkDirectory
 $env:ANDROID_HOME = $AndroidSdkDirectory
 $env:ANDROID_SDK_ROOT = $AndroidSdkDirectory
 $env:PATH = "$(Join-Path $JavaSdkDirectory 'bin');$env:PATH"
+if ([string]::IsNullOrWhiteSpace($env:GRADLE_USER_HOME) -or
+    -not (Test-Path $env:GRADLE_USER_HOME)) {
+    $env:GRADLE_USER_HOME = Join-Path $env:USERPROFILE ".gradle"
+}
 
 Push-Location $androidRoot
 try {
