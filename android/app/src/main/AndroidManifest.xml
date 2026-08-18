@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        miuix-blur declares API 33 because its shader path needs RuntimeShader.
+        Android 12 uses the guarded compatibility renderer instead; no miuix-blur
+        entry point is invoked below API 33.
+    -->
+    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur" />
     <application
         android:name=".MarkstashApplication"
         android:allowBackup="false"

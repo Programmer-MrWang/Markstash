@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.programmermrwang.markstash"
-        minSdk = 33
+        minSdk = 31
         targetSdk = 35
         versionCode = appVersionCode
         versionName = appVersionName

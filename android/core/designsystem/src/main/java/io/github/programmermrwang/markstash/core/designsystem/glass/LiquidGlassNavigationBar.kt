@@ -9,6 +9,7 @@ package io.github.programmermrwang.markstash.core.designsystem.glass
 import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,10 +51,13 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -63,6 +67,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.fastRoundToInt
@@ -93,6 +98,20 @@ data class LiquidNavigationDestination(
 
 private val LocalNavigationContentColor = compositionLocalOf { Color.Unspecified }
 private val LocalNavigationContentScale = compositionLocalOf<() -> Float> { { 1f } }
+
+/** Placeholder backdrop used only by the Android 12 compatibility renderer. */
+private object CompatibilityBackdrop : Backdrop {
+    override val isCoordinatesDependent: Boolean = false
+    override val offsetResidualX: Float = 0f
+    override val offsetResidualY: Float = 0f
+
+    override fun DrawScope.drawBackdrop(
+        density: Density,
+        coordinates: LayoutCoordinates?,
+        layerBlock: (GraphicsLayerScope.() -> Unit)?,
+        downscaleFactor: Int,
+    ) = Unit
+}
 
 private val IndicatorSpecular = Highlight(
     width = 1.dp,
@@ -156,6 +175,19 @@ fun LiquidGlassBackdropScaffold(
     content: @Composable BoxScope.() -> Unit,
     overlay: @Composable BoxScope.(Backdrop) -> Unit,
 ) {
+    if (!supportsNativeLiquidGlass(Build.VERSION.SDK_INT)) {
+        Box(modifier = modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                content = content,
+            )
+            overlay(CompatibilityBackdrop)
+        }
+        return
+    }
+
     val backdrop = rememberLayerBackdrop()
     Box(modifier = modifier.fillMaxSize()) {
         Box(
@@ -179,6 +211,17 @@ fun LiquidGlassNavigationBar(
     glassEnabled: Boolean = true,
 ) {
     if (destinations.isEmpty()) return
+
+    if (!supportsNativeLiquidGlass(Build.VERSION.SDK_INT)) {
+        CompatibleNavigationBar(
+            destinations = destinations,
+            selectedIndex = selectedIndex,
+            onSelected = onSelected,
+            modifier = modifier,
+            glassEnabled = glassEnabled,
+        )
+        return
+    }
 
     val count = destinations.size
     val maxIndex = count - 1
@@ -473,11 +516,100 @@ fun LiquidGlassNavigationBar(
 }
 
 @Composable
+private fun CompatibleNavigationBar(
+    destinations: List<LiquidNavigationDestination>,
+    selectedIndex: Int,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier,
+    glassEnabled: Boolean,
+) {
+    val isDark = isSystemInDarkTheme()
+    val density = LocalDensity.current
+    val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
+    val safeSelectedIndex = selectedIndex.coerceIn(0, destinations.lastIndex)
+    var tabWidthPx by remember { mutableFloatStateOf(0f) }
+    val animatedIndex by animateFloatAsState(
+        targetValue = safeSelectedIndex.toFloat(),
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f),
+        label = "android12NavigationIndicator",
+    )
+    val shellColor = MaterialTheme.colorScheme.surface.copy(
+        alpha = if (glassEnabled) {
+            if (isDark) 0.78f else 0.88f
+        } else {
+            1f
+        },
+    )
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        modifier = modifier
+            .widthIn(max = 520.dp)
+            .fillMaxWidth()
+            .dropShadow(
+                shape = CircleShape,
+                shadow = Shadow(
+                    radius = 10.dp,
+                    color = Color.Black,
+                    alpha = if (isDark) 0.20f else 0.10f,
+                ),
+            )
+            .background(shellColor, CircleShape)
+            .height(LiquidGlassMetrics.ShellHeight)
+            .padding(4.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned { coordinates ->
+                    tabWidthPx = coordinates.size.width.toFloat() / destinations.size
+                },
+        ) {
+            if (tabWidthPx > 0f) {
+                val tabWidth = with(density) { tabWidthPx.toDp() }
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            translationX = if (isLtr) {
+                                animatedIndex * tabWidthPx
+                            } else {
+                                (destinations.lastIndex - animatedIndex) * tabWidthPx
+                            }
+                        }
+                        .width(tabWidth)
+                        .height(LiquidGlassMetrics.IndicatorHeight)
+                        .background(activeColor.copy(alpha = 0.16f), CircleShape)
+                        .innerShadow(CircleShape) {
+                            InnerShadow(
+                                radius = 4.dp,
+                                color = Color.Black.copy(alpha = 0.08f),
+                            )
+                        },
+                )
+            }
+
+            CompositionLocalProvider(LocalNavigationContentColor provides inactiveColor) {
+                NavigationRow(
+                    destinations = destinations,
+                    selectedIndex = safeSelectedIndex,
+                    onSelected = onSelected,
+                    selectedContentColor = activeColor,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun NavigationRow(
     destinations: List<LiquidNavigationDestination>,
     selectedIndex: Int,
     onSelected: (Int) -> Unit,
     modifier: Modifier,
+    selectedContentColor: Color? = null,
 ) {
     Row(
         modifier = modifier,
@@ -489,6 +621,7 @@ private fun NavigationRow(
                 destination = destination,
                 selected = index == selectedIndex,
                 onClick = { onSelected(index) },
+                selectedContentColor = selectedContentColor,
             )
         }
     }
@@ -499,8 +632,13 @@ private fun RowScope.NavigationItem(
     destination: LiquidNavigationDestination,
     selected: Boolean,
     onClick: () -> Unit,
+    selectedContentColor: Color? = null,
 ) {
-    val color = LocalNavigationContentColor.current
+    val color = if (selected && selectedContentColor != null) {
+        selectedContentColor
+    } else {
+        LocalNavigationContentColor.current
+    }
     val scale = LocalNavigationContentScale.current
     Column(
         modifier = Modifier
