@@ -1,26 +1,43 @@
 param(
     [string] $AndroidSdkDirectory = "$env:LOCALAPPDATA\Android\Sdk",
-    [string] $JavaSdkDirectory = "$env:LOCALAPPDATA\Microsoft\Jdk\17"
+    [string] $JavaSdkDirectory = $env:JAVA_HOME
 )
 
 $ErrorActionPreference = "Stop"
-$project = Join-Path $PSScriptRoot "..\src\Markstash.Android\Markstash.Android.csproj"
-$nugetConfig = Join-Path $PSScriptRoot "..\NuGet.Config"
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$androidRoot = Join-Path $repoRoot "android-native"
 
-dotnet workload install android
-dotnet restore $project --configfile $nugetConfig
-dotnet build $project `
-    --framework net10.0-android `
-    --target InstallAndroidDependencies `
-    --no-restore `
-    --property:AndroidSdkDirectory=$AndroidSdkDirectory `
-    --property:JavaSdkDirectory=$JavaSdkDirectory `
-    --property:AcceptAndroidSDKLicenses=true
+if ([string]::IsNullOrWhiteSpace($JavaSdkDirectory)) {
+    $JavaSdkDirectory = Get-ChildItem "C:\Program Files\Microsoft" -Directory -Filter "jdk-21*" |
+        Sort-Object Name -Descending |
+        Select-Object -First 1 -ExpandProperty FullName
+}
 
-[Environment]::SetEnvironmentVariable("ANDROID_HOME", $AndroidSdkDirectory, "User")
-[Environment]::SetEnvironmentVariable("ANDROID_SDK_ROOT", $AndroidSdkDirectory, "User")
-[Environment]::SetEnvironmentVariable("JAVA_HOME", $JavaSdkDirectory, "User")
+if ([string]::IsNullOrWhiteSpace($JavaSdkDirectory) -or
+    -not (Test-Path (Join-Path $JavaSdkDirectory "bin\java.exe"))) {
+    throw "OpenJDK 21 is required. Install Microsoft.OpenJDK.21 or pass -JavaSdkDirectory."
+}
+
+if (-not (Test-Path $AndroidSdkDirectory)) {
+    throw "Android SDK was not found at '$AndroidSdkDirectory'."
+}
+
+$env:JAVA_HOME = $JavaSdkDirectory
+$env:ANDROID_HOME = $AndroidSdkDirectory
+$env:ANDROID_SDK_ROOT = $AndroidSdkDirectory
+$env:PATH = "$(Join-Path $JavaSdkDirectory 'bin');$env:PATH"
+
+Push-Location $androidRoot
+try {
+    & .\gradlew.bat :app:assembleDebug --no-configuration-cache
+    if ($LASTEXITCODE -ne 0) {
+        throw "The native Android build failed with exit code $LASTEXITCODE."
+    }
+}
+finally {
+    Pop-Location
+}
 
 Write-Output "Android SDK: $AndroidSdkDirectory"
 Write-Output "Java SDK:    $JavaSdkDirectory"
-Write-Output "Open a new terminal before building so the user environment is refreshed."
+Write-Output "APK:         $androidRoot\app\build\outputs\apk\debug\app-debug.apk"

@@ -1,112 +1,134 @@
 # Markstash
 
-Markstash 是一个面向 Windows 与 Android 的跨平台资源整理工具。
-当前仓库提供可以继续扩展的应用地基，业务方向仍可围绕收藏、搜索、文件、笔记与 AI 能力迭代。
+Markstash 是一个面向 Windows 与 Android 的资源整理工具。Windows 使用 Avalonia，
+Android 使用原生 Kotlin/Jetpack Compose 与 Miuix，两端通过同一个 ASP.NET Core API
+访问共享业务能力；主题、日志和设备设置由各平台本地实现。
 
 ## 技术栈
 
-- C# 14 / .NET 10 LTS
-- Avalonia 12.1.1
-- FluentAvaloniaUI 3.0.2
-- CommunityToolkit.Mvvm 8.4.2
-- Microsoft.Extensions.Hosting / DependencyInjection / Logging 10.0.10
-- xUnit
+- Windows：C# 14、.NET 10、Avalonia 12.1.1、FluentAvaloniaUI 3
+- Backend：ASP.NET Core 10 Minimal API、OpenAPI、ProblemDetails
+- Android：Kotlin 2.4、Compose BOM 2026.06、Material 3、Miuix 0.9.3
+- Android build：Gradle 9.5、AGP 9.3.1、OpenJDK 21
+- Tests：xUnit、ASP.NET Core TestServer、JUnit
 
-所有 NuGet 版本都由 `Directory.Packages.props` 集中管理。共享 UI 只依赖 `net10.0`，
-Windows 使用 Desktop 宿主，Android 使用独立的 `net10.0-android` 宿主。
+NuGet 版本由 `Directory.Packages.props` 集中管理，Android 版本由
+`android-native/gradle/libs.versions.toml` 集中管理。
 
 ## 项目结构
 
 ```text
 src/
-  Markstash.Domain/          领域模型，不依赖 UI 或平台
-  Markstash.Application/     用例、端口和应用服务
-  Markstash.Infrastructure/  JSON 设置与跨平台数据路径
-  Markstash.App/             Avalonia + FA3 共享 UI/MVVM
-  Markstash.Desktop/         Windows 启动宿主
-  Markstash.Android/         Android 启动宿主与资源
+  Markstash.Domain/          Windows 领域模型
+  Markstash.Application/     Windows 用例与平台端口
+  Markstash.Infrastructure/  Windows 本地设置、日志与系统实现
+  Markstash.Contracts/       版本化 ASP.NET Core API DTO
+  Markstash.ApiClient/       Windows HTTP 客户端
+  Markstash.Backend/         共享 ASP.NET Core 后端
+  Markstash.App/             Avalonia UI、MVVM 与组合根
+  Markstash.Desktop/         Windows 宿主
+android-native/
+  app/                       原生 Android 壳与四个主页面
+  core/designsystem/         Miuix Backdrop 液态玻璃导航
+  core/model/                Android 不可变模型与端口
+  core/network/              Retrofit/OkHttp API 实现
+  core/platform/             DataStore 与 Android 本地日志
 tests/
-  Markstash.Tests/           应用与基础设施测试
+  Markstash.Tests/           Windows、应用层与 API Client 测试
+  Markstash.Backend.Tests/   ASP.NET Core 集成测试
 ```
-
-依赖只允许从外层指向内层：
 
 ```text
-Desktop / Android -> App -> Infrastructure -> Application -> Domain
-                              Application -----------------> Domain
+Windows Avalonia ---- Markstash.ApiClient ----┐
+                                               ├---- ASP.NET Core /api/v1
+Android Compose ----- Retrofit/OkHttp --------┘
+
+Windows local: JSON settings + file diagnostics
+Android local: DataStore + Android process diagnostics
 ```
 
-更完整的分层、组合根与扩展约束见 [`docs/architecture.md`](docs/architecture.md)。
+更完整的依赖方向、共享契约和平台能力边界见 [`docs/architecture.md`](docs/architecture.md)。
 
-## 本地运行
+## 启动后端
 
-桌面：
+后端开发地址统一为 `http://localhost:5080`：
+
+```powershell
+.\scripts\run-backend.ps1
+```
+
+或者使用容器：
+
+```powershell
+docker compose up --build backend
+```
+
+OpenAPI 位于 `/openapi/v1.json`。诊断 API 默认关闭；本地排查时可运行：
+
+```powershell
+.\scripts\run-backend.ps1 -ExposeDiagnostics
+```
+
+## Windows
 
 ```powershell
 dotnet restore src/Markstash.Desktop/Markstash.Desktop.csproj --configfile NuGet.Config
 dotnet run --project src/Markstash.Desktop/Markstash.Desktop.csproj
 ```
 
-桌面宿主支持基础启动参数：
+桌面 UI、路由和 FluentAvalonia 结构保持原样。启动时会后台探测同一个后端，失败只记录
+日志，不阻塞离线启动。通过 `MARKSTASH_API_URL` 覆盖默认地址：
 
 ```powershell
-dotnet run --project src/Markstash.Desktop/Markstash.Desktop.csproj -- --verbose
-dotnet run --project src/Markstash.Desktop/Markstash.Desktop.csproj -- --data-dir .\.data
-dotnet run --project src/Markstash.Desktop/Markstash.Desktop.csproj -- markstash://app/settings
-```
-
-测试：
-
-```powershell
-dotnet restore tests/Markstash.Tests/Markstash.Tests.csproj --configfile NuGet.Config
-dotnet test tests/Markstash.Tests/Markstash.Tests.csproj
+$env:MARKSTASH_API_URL = "https://api.example.com/"
 ```
 
 ## Android
 
-Windows PowerShell 中以管理员身份准备 workload、JDK 与 Android SDK：
+原生客户端最低 Android 13（API 33），这是公开版 Miuix Backdrop 的完整液态玻璃要求。
+它使用页面 sibling capture、活动内容独立 capture、combined Backdrop、24dp 折射、
+色散、重力高光、弹簧拖动与 56/78dp 指示器形变。
+
+准备 OpenJDK 21 和 Android SDK 后运行：
 
 ```powershell
 .\scripts\setup-android.ps1
 ```
 
-完成后构建 APK：
+或者直接构建：
 
 ```powershell
-dotnet build src/Markstash.Android/Markstash.Android.csproj -f net10.0-android -c Debug
+cd android-native
+.\gradlew.bat :app:assembleDebug --no-configuration-cache
 ```
 
-默认最低 Android 版本为 API 23（Android 6.0）。调试 APK 输出在
-`src/Markstash.Android/bin/Debug/net10.0-android/`。
+调试 APK 默认访问模拟器宿主 `http://10.0.2.2:5080/`，也可以在 Android 设置页修改。
+Debug 使用独立的 `.debug` applicationId，可与正式包并存。Release 禁止明文 HTTP，并通过
+`-Pmarkstash.apiBaseUrl=https://.../` 注入正式地址。
 
-## 已有地基
+## 验证
 
-- FluentAvalonia 主题、Windows Mica 托管标题栏、窗口菜单与自适应导航壳
-- Generic Host、生命周期状态、依赖注入验证与可控关闭
-- 集中路由、返回栈和 `markstash://app/{route}` 启动 URI
-- `.resx` 中英文资源基础
-- 版本化设置、旧格式迁移、原子替换、备份恢复和未来版本只读保护
-- Windows、Android 路径分区与测试/便携目录覆盖
-- JSON 控制台日志、文本 `.log` 与 GZip 归档日志、崩溃报告、异常会话检测和诊断包服务
-- Windows 日志查看窗口、桌面快捷方式与日志/应用目录快捷入口
-- Source Link、统一版本元数据、Dependabot、覆盖率 CI 与标签发布流水线
-- 宿主冒烟、分层约束、设置恢复和诊断链路测试
-- 可复用的 Android 环境安装脚本
+```powershell
+dotnet test tests/Markstash.Tests/Markstash.Tests.csproj -c Release
+dotnet test tests/Markstash.Backend.Tests/Markstash.Backend.Tests.csproj -c Release
 
-当前会话写入 `log-年-月-日-时-分-秒-序号.log`；日志超过 10 MiB 时立即轮转，
-已经结束的会话会在下次启动时原子压缩为 `.log.gz`。日志默认保留 30 天且最多保留
-64 份压缩归档，崩溃报告最多保留 20 份。诊断包通过
-`IAppDiagnosticsService` 创建，包含运行环境、日志、崩溃报告和当前设置；它不会自动上传。
+cd android-native
+.\gradlew.bat :core:network:testDebugUnitTest :core:designsystem:testDebugUnitTest `
+  :app:lintDebug :app:assembleDebug --no-configuration-cache
+```
 
-Android 默认关闭系统云备份，等业务数据分类与加密策略明确后再按目录显式开放。
+## 发布配置
 
-正式发布使用 `vMAJOR.MINOR.PATCH` SemVer 标签。Release 会先运行测试；Windows 产出 ZIP。
-Android Release 必须配置以下 GitHub Actions secrets，
-缺少任意一个都会拒绝发布 unsigned APK：
+Android Release 需要以下 GitHub Actions secrets：
 
 - `ANDROID_KEYSTORE_BASE64`
 - `ANDROID_SIGNING_STORE_PASSWORD`
 - `ANDROID_SIGNING_KEY_ALIAS`
 - `ANDROID_SIGNING_KEY_PASSWORD`
 
-项目采用 [GPL-3.0](LICENSE) 许可证。
+还需要仓库 Actions variable：
+
+- `MARKSTASH_API_BASE_URL`，必须是正式 HTTPS API 地址
+
+项目采用 [GPL-3.0](LICENSE) 许可证。Android 液态玻璃实现的 BiliPai 来源与许可证
+说明见 `android-native/THIRD_PARTY_NOTICES.md`。

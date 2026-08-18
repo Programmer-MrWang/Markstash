@@ -1,61 +1,79 @@
 # 架构约束
 
-Markstash 的共享代码按稳定性从内向外分层。新增功能应优先延续这些边界，避免把平台 API、UI 类型或磁盘格式带入内层。
+Markstash 采用两个独立前端、一个版本化 HTTP 后端。Windows 保留 Avalonia，Android
+使用原生 Kotlin/Jetpack Compose；两端共享的是 ASP.NET Core API 契约，而不是 UI、
+生命周期或平台服务实现。
 
 ```text
-Domain <- Application <- Infrastructure <- App <- Desktop / Android
-              ^____________________________|
+Windows
+Desktop -> App -> Infrastructure -> Application -> Domain
+              \
+               -> ApiClient -> Contracts <- Backend
+                                      ^
+Android                               |
+Compose app -> core:network ----------+
+            -> core:platform
+            -> core:designsystem
+            -> core:model
 ```
 
-## 各层职责
+## 共享边界
+
+- `Markstash.Contracts`：`/api/v1` 的 C# DTO 与版本常量，不引用 UI 或平台项目。
+- `Markstash.Backend`：中立的 ASP.NET Core Minimal API，只引用 Contracts；不得反向引用
+  Avalonia、Windows Application/Infrastructure 或 Android 代码。
+- `Markstash.ApiClient`：Windows typed `HttpClient`，把 Avalonia 端接到同一个 API。
+- Android `core:network`：Retrofit/OkHttp 客户端，按同一 JSON 契约实现 Kotlin 传输模型。
+- API 的新增或破坏性变化必须先更新版本化契约、OpenAPI 和两端契约测试。
+
+当前 API 提供 health、bootstrap 与可选的服务器诊断。`/api/v1/resources` 已在 bootstrap
+能力中预留，但在真实共享资源模型落地前明确返回不可用，客户端不得假装数据已经同步。
+
+## Windows 边界
 
 - `Markstash.Domain`：领域值对象与规则，不引用其他 Markstash 项目。
-- `Markstash.Application`：用例、端口、生命周期与诊断契约，只依赖 Domain。
-- `Markstash.Infrastructure`：文件、路径、日志和运行时实现，依赖 Application。
+- `Markstash.Application`：Windows 用例、端口、生命周期与诊断契约，只依赖 Domain。
+- `Markstash.Infrastructure`：Windows 文件、路径、日志和运行时实现。
 - `Markstash.App`：Avalonia 视图、ViewModel、路由、主题和组合根。
-- `Markstash.Desktop` / `Markstash.Android`：平台入口、打包与最外层启动故障边界。
+- `Markstash.Desktop`：Windows 入口、打包与最外层启动故障边界。
+- `BackendConnectivityService` 只在后台探测 API；后端不可用时桌面仍可离线启动。
 
-`ArchitectureTests` 会阻止内层反向引用 UI 或基础设施。
+`ArchitectureTests` 会阻止内层反向引用 UI 或基础设施。桌面 UI、FluentAvalonia 导航和
+本地设置格式不因 Android 前端替换而改变。
 
-## 组合根与生命周期
+## Android 边界
 
-`ServiceConfiguration` 是共享组合根。它创建 Generic Host、启用作用域与构造验证，并注册所有 `IHostedService`。应用启动顺序是：
+- `app`：Activity、Compose 导航、ViewModel 与依赖装配。
+- `core:model`：不可变模型和仓储端口，不依赖 Android UI。
+- `core:network`：Retrofit、OkHttp、序列化和 endpoint 规范化。
+- `core:platform`：DataStore、本地日志及后续 Android 系统能力适配器。
+- `core:designsystem`：主题和 Miuix Backdrop 液态玻璃组件。
 
-1. 解析宿主参数并应用目录覆盖。
-2. 构建、启动 Host。
-3. 加载设置并应用主题。
-4. 创建根 ViewModel 和视图。
-5. 将应用生命周期标记为 Running。
+Android 最低 API 33。Debug 使用 `.debug` applicationId 与正式包并存；Release 关闭明文
+HTTP，正式 API 地址在构建时注入。主题、液态玻璃开关、endpoint 和设备日志属于本地
+状态，不上传后端。
 
-桌面受控生命周期会在退出时停止并释放 Host。Android 的 Activity 重建不等同于进程退出，因此不会在 `OnDestroy` 停止共享 Host。
-桌面 `Exit` 会等待 Host 完成停止；新增的 `IHostedService.StopAsync` 不得切回 Avalonia UI 线程，耗时清理应自行使用后台 I/O 并遵守取消令牌。
+## 液态玻璃
 
-## 持久化规则
+底部导航不是半透明色块模拟：页面先通过 sibling `layerBackdrop` 提供真实背景采样，
+活动内容再进入独立 capture layer，二者由 combined backdrop 交给移动指示器。实现位于
+`android-native/core/designsystem/.../glass/`，包括 Miuix blur/lens、色散、重力高光、
+内阴影以及可中断的阻尼拖拽。
 
-- 配置文件使用独立 `schemaVersion` 和单调 `revision`。
-- 保存使用同目录唯一临时文件、落盘 flush、写后解析校验和同卷替换。
-- 读取顺序为 primary、backup、默认值；损坏文件隔离并限量保留。
-- 高于当前 schema 的文件进入只读模式，旧程序不得覆盖。
-- `MARKSTASH_DATA_DIR` 会覆盖整套目录，供测试、便携运行和故障复现使用。
+视觉常量与 BiliPai 对齐：shell 64dp、indicator 56dp、按压比例 78/56、shell blur 4dp、
+lens 24/24dp、indicator lens 10/14dp、chromatic aberration 0.5、边缘橡皮筋 4dp。
+相关改编保留 GPL-3.0 来源说明和完整许可证。
 
-正式数据模型应继续使用 Infrastructure DTO，不要直接把可变磁盘格式暴露为 Domain 契约。
+## 生命周期与本地能力
 
-## 导航与本地化
+桌面 Generic Host 随 Windows 应用启动和退出；Android 使用 Activity/ViewModel 生命周期，
+不承载 .NET Host。新增平台功能先在各自前端定义端口，再由 Windows 或 Android 实现，
+例如文件选择器、通知、凭据存储、分享和系统主题。平台 API 或磁盘格式不得进入共享
+HTTP 契约。
 
-页面注册为 `NavigationRoute`，由 `INavigationService` 解析、缓存并维护返回栈。`NavigationPlacement` 决定路由显示在主导航区、页脚区或作为隐藏子页面；只有隐藏页面会根据返回栈显示返回按钮。外部启动 URI 只映射到已注册 route，不允许从 URI 构造任意类型。
-
-用户可见文字放在 `Localization/Strings*.resx`。新增文字必须同时提供中性资源与英文资源；领域错误码和日志模板保持稳定，不依赖界面语言。
-
-## 诊断与隐私
-
-- 普通日志经 `ILogger` 写往调试、JSON 控制台和本地文件 provider。
-- 文件日志使用 `时间|级别|类别|消息` 的稳定文本格式；异常堆栈作为后续行写入，当前会话文件扩展名为 `.log`。
-- 单个日志达到 10 MiB 时轮转；应用启动时把已结束会话的 `.log` 原子压缩为 `.log.gz`，并按 30 天、最多 64 份归档执行清理。
-- Windows 日志窗口通过 `IAppLogReader` 读取活动 `.log` 与归档 `.log.gz`，不直接依赖文件日志 provider 的内部实现；旧版 `.jsonl` 只作为迁移兼容输入。
-- 未处理异常另写独立 JSON 崩溃报告，避免 logger 本身故障时丢失诊断。
-- 会话标记按进程隔离，只把已停止进程遗留的标记视为异常退出。
-- 日志会遮蔽常见密钥字段和用户主目录；诊断包只由显式调用创建且不会上传。
-- 新增敏感数据前，应同步更新日志脱敏、诊断包收集范围和 Android 备份策略。
+Windows 设置继续使用带 schema/revision 的 JSON 原子持久化、备份恢复和只读保护。
+Android 设置使用 DataStore。两端日志和诊断默认保留本地；服务器诊断默认关闭，只能由
+显式配置开启。
 
 ## 验证门槛
 
@@ -64,7 +82,12 @@ Domain <- Application <- Infrastructure <- App <- Desktop / Android
 ```powershell
 dotnet build src/Markstash.Desktop/Markstash.Desktop.csproj -c Release
 dotnet test tests/Markstash.Tests/Markstash.Tests.csproj -c Release
+dotnet test tests/Markstash.Backend.Tests/Markstash.Backend.Tests.csproj -c Release
+
+cd android-native
+.\gradlew.bat :core:network:testDebugUnitTest :core:designsystem:testDebugUnitTest `
+  :app:lintDebug :app:assembleDebug --no-configuration-cache
 ```
 
-涉及 Android 宿主时，再构建 `Markstash.Android.csproj`。发布标签 `vMAJOR.MINOR.PATCH` 会生成 Windows x64 自包含压缩包和 Android APK。
-Release 工作流会在发布构建前重复运行测试，并拒绝非法 SemVer 标签或未签名 Android 产物。
+发布标签 `vMAJOR.MINOR.PATCH` 生成 Windows x64、自包含 Linux 后端和已签名 Android
+APK。Release 流水线拒绝非法 SemVer、缺失签名材料或非 HTTPS 的 Android API 地址。

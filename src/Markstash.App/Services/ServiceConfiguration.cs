@@ -3,6 +3,7 @@ using Markstash.App.Localization;
 using Markstash.App.Navigation;
 using Markstash.App.ViewModels;
 using Markstash.App.Views;
+using Markstash.ApiClient;
 using Markstash.Application;
 using Markstash.Application.Runtime;
 using Markstash.Infrastructure;
@@ -42,6 +43,15 @@ internal static class ServiceConfiguration
             .ConfigureServices(services =>
             {
                 services.AddSingleton(startupOptions);
+                services.AddMarkstashApiClient(options =>
+                {
+                    var configuredAddress = Environment.GetEnvironmentVariable(
+                        MarkstashApiClientOptions.EnvironmentVariable);
+                    if (Uri.TryCreate(configuredAddress, UriKind.Absolute, out var baseAddress))
+                    {
+                        options.BaseAddress = baseAddress;
+                    }
+                });
                 services.AddMarkstashApplication();
                 services.AddMarkstashInfrastructure();
                 services.AddSingleton<IThemeService, AvaloniaThemeService>();
@@ -78,6 +88,7 @@ internal static class ServiceConfiguration
                 services.AddSingleton<AppExceptionHandler>();
                 services.AddSingleton<IHostedService>(provider =>
                     provider.GetRequiredService<AppExceptionHandler>());
+                services.AddSingleton<IHostedService, BackendConnectivityService>();
 
                 services.AddTransient<HomePageViewModel>();
                 services.AddTransient<LibraryPageViewModel>();

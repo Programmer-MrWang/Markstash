@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Markstash.ApiClient\Markstash.ApiClient.csproj" />
     <ProjectReference Include="..\..\src\Markstash.App\Markstash.App.csproj" />
     <ProjectReference Include="..\..\src\Markstash.Application\Markstash.Application.csproj" />
     <ProjectReference Include="..\..\src\Markstash.Infrastructure\Markstash.Infrastructure.csproj" />

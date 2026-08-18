@@ -1,2 +1,0 @@
-Android resources use lowercase file names so builds behave consistently on
-Windows, macOS, and Linux hosts.

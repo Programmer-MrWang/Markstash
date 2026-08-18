@@ -57,6 +57,26 @@ jobs:
           path: artifacts/Markstash-windows.zip
           if-no-files-found: error
 
+  backend:
+    name: ASP.NET Core backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore tests/Markstash.Backend.Tests/Markstash.Backend.Tests.csproj --configfile NuGet.Config
+
+      - name: Test
+        run: dotnet test tests/Markstash.Backend.Tests/Markstash.Backend.Tests.csproj --configuration Release --no-restore
+
+      - name: Build container image
+        run: docker build --file src/Markstash.Backend/Dockerfile --tag markstash-backend:ci .
+
   android:
     name: Android
     runs-on: ubuntu-latest
@@ -64,40 +84,29 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
       - uses: actions/setup-java@v5
         with:
           distribution: microsoft
-          java-version: 17
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
 
-      - name: Install Android workload
-        run: dotnet workload install android
-
-      - name: Restore
-        run: dotnet restore src/Markstash.Android/Markstash.Android.csproj --configfile NuGet.Config
-
-      - name: Publish APK
+      - name: Test, lint, and assemble
+        working-directory: android-native
         run: >-
-          dotnet publish src/Markstash.Android/Markstash.Android.csproj
-          --configuration Release
-          --no-restore
-          --property:AndroidSdkDirectory="$ANDROID_HOME"
-          --property:AndroidPackageFormat=apk
+          bash ./gradlew
+          :core:network:testDebugUnitTest
+          :core:designsystem:testDebugUnitTest
+          :app:lintDebug
+          :app:assembleDebug
+          --no-configuration-cache
 
       - name: Collect APK
-        shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force artifacts | Out-Null
-          $apk = Get-ChildItem src/Markstash.Android/bin/Release -Recurse -Filter *.apk |
-            Sort-Object LastWriteTimeUtc -Descending |
-            Select-Object -First 1
-          if ($null -eq $apk) { throw "Android publish did not produce an APK." }
-          Copy-Item $apk.FullName "artifacts/Markstash-android.apk"
+          mkdir -p artifacts
+          cp android-native/app/build/outputs/apk/debug/app-debug.apk artifacts/Markstash-android-debug.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
-          name: Markstash-android
-          path: artifacts/Markstash-android.apk
+          name: Markstash-android-debug
+          path: artifacts/Markstash-android-debug.apk
           if-no-files-found: error

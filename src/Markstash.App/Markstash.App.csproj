@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Markstash.ApiClient\Markstash.ApiClient.csproj" />
     <ProjectReference Include="..\Markstash.Application\Markstash.Application.csproj" />
     <ProjectReference Include="..\Markstash.Infrastructure\Markstash.Infrastructure.csproj" />
   </ItemGroup>

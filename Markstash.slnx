@@ -1,15 +1,16 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Markstash.Android/Markstash.Android.csproj">
-      <Deploy />
-    </Project>
+    <Project Path="src/Markstash.ApiClient/Markstash.ApiClient.csproj" />
     <Project Path="src/Markstash.App/Markstash.App.csproj" />
     <Project Path="src/Markstash.Application/Markstash.Application.csproj" />
+    <Project Path="src/Markstash.Backend/Markstash.Backend.csproj" />
+    <Project Path="src/Markstash.Contracts/Markstash.Contracts.csproj" />
     <Project Path="src/Markstash.Desktop/Markstash.Desktop.csproj" />
     <Project Path="src/Markstash.Domain/Markstash.Domain.csproj" />
     <Project Path="src/Markstash.Infrastructure/Markstash.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Markstash.Backend.Tests/Markstash.Backend.Tests.csproj" />
     <Project Path="tests/Markstash.Tests/Markstash.Tests.csproj" />
   </Folder>
 </Solution>
