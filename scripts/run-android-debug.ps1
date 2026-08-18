@@ -11,6 +11,7 @@ $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $androidRoot = Join-Path $repoRoot "android"
 $apkPath = Join-Path $androidRoot "app\build\outputs\apk\debug\app-debug.apk"
+$installableApkPath = Join-Path $repoRoot "artifacts\Markstash-android-debug-installable.apk"
 $packageName = "io.github.programmermrwang.markstash.debug"
 
 if ([string]::IsNullOrWhiteSpace($JavaSdkDirectory)) {
@@ -44,7 +45,7 @@ if ([string]::IsNullOrWhiteSpace($env:GRADLE_USER_HOME) -or
 
 Push-Location $androidRoot
 try {
-    & .\gradlew.bat :app:assembleDebug --no-configuration-cache
+    & .\gradlew.bat :app:assembleDebug '-Pandroid.injected.testOnly=false' --no-configuration-cache
     if ($LASTEXITCODE -ne 0) {
         throw "The native Android build failed with exit code $LASTEXITCODE."
     }
@@ -53,7 +54,13 @@ finally {
     Pop-Location
 }
 
-Write-Output "APK: $apkPath"
+& (Join-Path $PSScriptRoot "assert-android-apk-installable.ps1") `
+    -ApkPath $apkPath `
+    -AndroidSdkDirectory $AndroidSdkDirectory
+
+New-Item -ItemType Directory -Force (Split-Path $installableApkPath) | Out-Null
+Copy-Item $apkPath $installableApkPath -Force
+Write-Output "Installable APK: $installableApkPath"
 
 if (-not ($Install -or $Launch -or $Logcat)) {
     exit 0
@@ -71,7 +78,7 @@ if ([string]::IsNullOrWhiteSpace($DeviceId)) {
 }
 
 if ($Install -or $Launch) {
-    & $adbPath -s $DeviceId install -r $apkPath
+    & $adbPath -s $DeviceId install -r $installableApkPath
     if ($LASTEXITCODE -ne 0) {
         throw "APK installation failed on device '$DeviceId'."
     }

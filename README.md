@@ -80,6 +80,12 @@ dotnet run --project src/Markstash.Desktop/Markstash.Desktop.csproj
 .\scripts\run-android-debug.ps1 -Install -Launch
 ```
 
+需要把测试包发给其他设备安装时，运行同一脚本并分发
+`artifacts/Markstash-android-debug-installable.apk`。脚本会在复制前检查 APK，确保它没有
+`android:testOnly="true"`。不要分发 Android Studio 点击 Run 后留下的 APK；该流程可能生成
+只能由 `adb install -t` 安装的测试包。面向正式用户的版本仍应使用 GitHub Release 中由
+release 签名流程生成的 `Markstash-android-signed.apk`。
+
 Android Studio、IntelliJ IDEA 或 Rider 应直接打开 `android`。Debug 使用独立的
 `.debug` applicationId，可与正式包并存。
 

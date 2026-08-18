@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $androidRoot = Join-Path $repoRoot "android"
+$apkPath = Join-Path $androidRoot "app\build\outputs\apk\debug\app-debug.apk"
 
 if ([string]::IsNullOrWhiteSpace($JavaSdkDirectory)) {
     $JavaSdkDirectory = Get-ChildItem "C:\Program Files\Microsoft" -Directory -Filter "jdk-21*" |
@@ -33,7 +34,7 @@ if ([string]::IsNullOrWhiteSpace($env:GRADLE_USER_HOME) -or
 
 Push-Location $androidRoot
 try {
-    & .\gradlew.bat :app:assembleDebug --no-configuration-cache
+    & .\gradlew.bat :app:assembleDebug '-Pandroid.injected.testOnly=false' --no-configuration-cache
     if ($LASTEXITCODE -ne 0) {
         throw "The native Android build failed with exit code $LASTEXITCODE."
     }
@@ -42,6 +43,10 @@ finally {
     Pop-Location
 }
 
+& (Join-Path $PSScriptRoot "assert-android-apk-installable.ps1") `
+    -ApkPath $apkPath `
+    -AndroidSdkDirectory $AndroidSdkDirectory
+
 Write-Output "Android SDK: $AndroidSdkDirectory"
 Write-Output "Java SDK:    $JavaSdkDirectory"
-Write-Output "APK:         $androidRoot\app\build\outputs\apk\debug\app-debug.apk"
+Write-Output "APK:         $apkPath"

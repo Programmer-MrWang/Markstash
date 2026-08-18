@@ -79,7 +79,15 @@ jobs:
           :core:designsystem:testDebugUnitTest
           :app:lintDebug
           :app:assembleDebug
+          -Pandroid.injected.testOnly=false
           --no-configuration-cache
+
+      - name: Verify APK is installable outside adb
+        shell: pwsh
+        run: >-
+          ./scripts/assert-android-apk-installable.ps1
+          -ApkPath android/app/build/outputs/apk/debug/app-debug.apk
+          -AndroidSdkDirectory $env:ANDROID_SDK_ROOT
 
       - name: Collect APK
         run: |

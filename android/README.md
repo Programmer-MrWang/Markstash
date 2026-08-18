@@ -40,6 +40,12 @@ For device installation and launch from the repository root:
 .\scripts\run-android-debug.ps1 -Install -Launch
 ```
 
+For a debug-signed APK that can be copied to another device and installed from a file
+manager, run the same script without switches and share
+`artifacts/Markstash-android-debug-installable.apk`. The script rejects APKs marked with
+`android:testOnly="true"`; do not distribute the APK left by Android Studio's Run action.
+Public releases must use the signed APK produced by the release workflow.
+
 Open `android` as the project root in Android Studio or IntelliJ IDEA/Rider for Kotlin
 breakpoints and Compose debugging. The native Android project is intentionally independent from
 the Windows solution.

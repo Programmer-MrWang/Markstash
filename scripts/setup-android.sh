@@ -19,7 +19,7 @@ export ANDROID_HOME="$android_sdk_directory"
 export ANDROID_SDK_ROOT="$android_sdk_directory"
 
 cd "$android_root"
-bash ./gradlew :app:assembleDebug --no-configuration-cache
+bash ./gradlew :app:assembleDebug -Pandroid.injected.testOnly=false --no-configuration-cache
 
 printf 'Android SDK: %s\n' "$android_sdk_directory"
 printf 'Java SDK:    %s\n' "$JAVA_HOME"
